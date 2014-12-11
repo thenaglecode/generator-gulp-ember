@@ -1,0 +1,4 @@
+{
+  "devel" : true,
+  "predef": [ "Ember", "$", "jQuery", "App" ]
+}

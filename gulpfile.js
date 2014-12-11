@@ -2,42 +2,40 @@
 'use strict';
 // generated on 2014-11-28 using generator-gulp-webapp 0.2.0
 var gulp = require('gulp');
+var gutil = require('gulp-util');
+var config = require('./config.json');
 var $ = require('gulp-load-plugins')();
 
+gulp.task('move', function(){
+    return gulp.src('app/scripts/.jshintrc')
+        .pipe(gulp.dest('.tmp/scripts/'));
+});
+
 gulp.task('styles', function () {
-  return gulp.src('app/styles/main.scss')
-    .pipe($.plumber())
-    .pipe($.rubySass({
-      style: 'expanded',
-      precision: 10
-    }))
-    .pipe($.autoprefixer({browsers: ['last 1 version']}))
-    .pipe(gulp.dest('.tmp/styles'));
+    return gulp.src('./app/styles/main.scss')
+        .pipe($.rubySass({
+          style: 'expanded',
+          precision: 10
+        }))
+        .on('error', function (err) { console.error('Error!', err.message); })
+        .pipe($.sourcemaps.write())
+        .pipe(gulp.dest('.tmp/styles'));
 });
 
-gulp.task('prepare-scripts', function() {
-  gulp.src(['app/scripts/app.js','app/scripts/**/!(concat-scripts)*.js'])
-    .pipe($.wrap('(function(){\n"use strict";\n<%= contents %>\n})();'))
-    .pipe($.concat('concat-scripts.js'))
-    .pipe(gulp.dest('app/scripts'));
-});
-
-gulp.task('jshint', ['prepare-scripts'], function () {
-  return gulp.src('app/scripts/app-scripts.js')
-    .pipe($.jshint())
+gulp.task('jshint', ['move'], function () {
+  return gulp.src('app/scripts/**/*.js')
+    .pipe($.wrap('(function(){\n\'use strict\';\n<%= contents %>\n})();'))
+    // the next line moves the jshint comments up top. I baked this plugin myself :)
+    .pipe($.regexShuffler(/["|']use strict["|'];[\n\s]*((?:\/\*[\s\S]*\*\/)[\n\s]*)[^\/]/g /* moves captureGroup 1... */,
+            /^/g /* ...after here */, {captureGroup: 1}))
+    .pipe(gulp.dest('.tmp/scripts/wrapped'))
+    .pipe($.jshint({lookup: '.tmp/scripts/.jshintrc'}))
     .pipe($.jshint.reporter('jshint-stylish'))
     .pipe($.jshint.reporter('fail'));
 });
 
-gulp.task('minuglify', ['prepare-scripts'], function() {
-  return gulp.src('app/scripts/app-scripts.js')
-    .pipe($.uglify())
-    .pipe($.rename('app-scripts.min.js'))
-    .pipe(gulp.dest('dist/scripts'));
-});
-
 //
-gulp.task('html', ['styles', 'prepare-scripts'], function () {
+gulp.task('html', ['styles'], function () {
   var lazypipe = require('lazypipe');
   // prepare the pipe to be used by the css asset userefs
   var cssChannel = lazypipe()
@@ -48,30 +46,12 @@ gulp.task('html', ['styles', 'prepare-scripts'], function () {
 
 
   return gulp.src('app/*.html')
-    .pipe($.notify('from debug'))
-    .pipe($.print())
-    .pipe($.debug({verbose: true}))
     .pipe(assets)
-    .pipe($.notify('from assets'))
-    .pipe($.print())
-    .pipe($.if('*.js', function() {
-      $.notify('in if js');
-      return $.uglify();
-      }()))
-    .pipe($.notify('from if js: uglify'))
-    .pipe($.print())
+    .pipe($.if('*.js', $.uglify()))
     .pipe($.if('*.css', cssChannel()))
-    .pipe($.notify('from if css: cssChannel'))
-    .pipe($.print())
     .pipe(assets.restore())
-    .pipe($.notify('from assets.restore'))
-    .pipe($.print())
     .pipe($.useref())
-    .pipe($.notify('from useref'))
-    .pipe($.print())
     .pipe($.if('*.html', $.minifyHtml({conditionals: true, loose: true})))
-    .pipe($.notify('from if html: minifyHtml'))
-    .pipe($.print())
     .pipe(gulp.dest('dist'));
 });
 
@@ -127,10 +107,10 @@ gulp.task('serve', ['connect', 'watch'], function () {
 });
 
 gulp.task('templates', function() {
-  gulp.src('app/templates/**/*.{hbs,handlebars}')
+  return gulp.src('app/templates/**/*.{hbs,handlebars}')
     .pipe($.emberTemplates())
     .pipe($.concat('ember-templates.js'))
-    .pipe(gulp.dest('dist/js'));
+    .pipe(gulp.dest('.tmp/scripts'));
 });
 
 // inject bower components
@@ -159,12 +139,34 @@ gulp.task('watch', ['connect'], function () {
 
   gulp.watch('app/styles/**/*.scss', ['styles']);
   gulp.watch('bower.json', ['wiredep']);
+  gulp.watch('app/templates/**/*.{hbs,handlebars}', ['templates']);
 });
 
-gulp.task('build', ['jshint', 'html', 'images', 'fonts', 'extras', 'minuglify'], function () {
-  return gulp.src('dist/**/*').pipe($.size({title: 'build', gzip: true}));
+gulp.task('build', ['jshint', 'html', 'images', 'fonts', 'extras', 'templates'], function () {
+  return gulp.src('dist/**/*')
+     .pipe($.size({title: 'build', gzip: true}));
 });
 
 gulp.task('default', ['clean'], function () {
-  gulp.start('build');
+    gulp.start('build');
+});
+
+gulp.task('deploy', ['clean'], function(){
+    gulp.start('moreDeploy');
+})
+
+gulp.task('moreDeploy', ['styles', 'html', 'images', 'fonts', 'extras', 'templates'], function() {
+    return gulp.src('./dist/**/*.*')
+      .pipe($.debug())
+      .pipe($.ftp({
+          "host": config.ftp.host,
+          "user": config.ftp.username,
+          "pass": config.ftp.password,
+          "remotePath": config.ftp.remotePath,
+          "verbose" : true
+      }))
+      .on('error', function(err) {
+        console.log(err.message);
+      })
+      .pipe($.notify('deployed!'));
 });

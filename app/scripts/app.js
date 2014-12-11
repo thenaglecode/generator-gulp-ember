@@ -1,11 +1,6 @@
-/* jshint devel: true */
-/* global Ember: true */
-(function() {
-    'use strict';
+/* exported App */
+var App = window.App = Ember.Application.create();
 
-    var App = window.App = Ember.Application.create();
-
-    App.Router.map(function() {
-        this.route('favorites');
-    });
-})();
+App.Router.map(function() {
+    this.route('favorites');
+});
