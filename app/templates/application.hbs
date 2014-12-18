@@ -1,6 +1,16 @@
-<!-- application template -->
-<h1>{{appName}}</h1>
-
-<h2>{{title}}</h2>
-
-{{outlet}}
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+        <ul class="nav navbar-nav">
+            <li>
+              {{#link-to 'technology' class='navbar-link'}}Tech{{/link-to}}
+            </li>
+        </ul>
+    </div>
+</nav>
+<!-- Main outlet -->
+<div class="jumbotron">
+    <div class="container">
+      {{outlet}}
+    </div>
+</div>

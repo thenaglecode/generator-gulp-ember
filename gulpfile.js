@@ -6,11 +6,6 @@ var gutil = require('gulp-util');
 var config = require('./config.json');
 var $ = require('gulp-load-plugins')();
 
-gulp.task('move', function(){
-    return gulp.src('app/scripts/.jshintrc')
-        .pipe(gulp.dest('.tmp/scripts/'));
-});
-
 gulp.task('styles', function () {
     return gulp.src('./app/styles/main.scss')
         .pipe($.rubySass({
@@ -22,14 +17,13 @@ gulp.task('styles', function () {
         .pipe(gulp.dest('.tmp/styles'));
 });
 
-gulp.task('jshint', ['move'], function () {
+gulp.task('jshint', function () {
   return gulp.src('app/scripts/**/*.js')
     .pipe($.wrap('(function(){\n\'use strict\';\n<%= contents %>\n})();'))
     // the next line moves the jshint comments up top. I baked this plugin myself :)
     .pipe($.regexShuffler(/["|']use strict["|'];[\n\s]*((?:\/\*[\s\S]*\*\/)[\n\s]*)[^\/]/g /* moves captureGroup 1... */,
             /^/g /* ...after here */, {captureGroup: 1}))
-    .pipe(gulp.dest('.tmp/scripts/wrapped'))
-    .pipe($.jshint({lookup: '.tmp/scripts/.jshintrc'}))
+    .pipe($.jshint({lookup: 'app/scripts/.jshintrc'}))
     .pipe($.jshint.reporter('jshint-stylish'))
     .pipe($.jshint.reporter('fail'));
 });

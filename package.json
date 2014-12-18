@@ -5,6 +5,7 @@
   },
   "devDependencies": {
     "apache-server-configs": "^2.11.0",
+    "bootlint": "^0.8.0",
     "browser-sync": "^1.7.2",
     "browserify": "^7.0.0",
     "connect": "^3.3.3",
