@@ -65,7 +65,7 @@ gulp.task('fonts', function () {
     .pipe(gulp.dest('dist/fonts'));
 });
 
-gulp.task('extras', function () {
+gulp.task('extras', ['clean'], function () {
   return gulp.src([
     'app/*.*',
     '!app/*.html',

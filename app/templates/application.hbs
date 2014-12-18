@@ -3,9 +3,12 @@
     <div class="container">
         <ul class="nav navbar-nav">
             <li>
-              {{#link-to 'technology' class='navbar-link'}}Tech{{/link-to}}
+              {{#link-to 'index' class='navbar-brand'}}{{appName}}{{/link-to}}
             </li>
+            <li>{{#link-to 'contact'}}Contact{{/link-to}}</li>
+            <li>{{#link-to 'about'}}About{{/link-to}}</li>
         </ul>
+        <p class="navbar-text navbar-right">Currently logged in as {{#link-to 'profile' class="navbar-link"}}{{username}}{{/link-to}}</p>
     </div>
 </nav>
 <!-- Main outlet -->
